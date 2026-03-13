@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Knowledge Base</title>
+  <style>
+    :root {
+  --bg: #0c0c0f;
+  --surface: #13131a;
+  --surface2: #1a1a24;
+  --border: #2a2a38;
+  --accent: #7c6af7;
+  --text: #e8e8f0;
+  --muted: #6b6b88;
+  --success: #5cb87a;
+  --danger: #e05c6a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: sans-serif;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+header {
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  overflow: hidden;
+}
+
+/* Sidebar */
+aside {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-section p {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+#file-input {
+  background: var(--surface2);
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+#file-input:hover { border-color: var(--accent); }
+
+/* Chat */
+main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-area {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  gap: 12px;
+}
+
+#question-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 0.9rem;
+  resize: none;
+  outline: none;
+  min-height: 48px;
+  max-height: 120px;
+}
+
+#question-input:focus { border-color: var(--accent); }
+
+#ask-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+#ask-btn:hover { opacity: 0.85; }
+#ask-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Chat bubbles */
+.question-bubble {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 18px 18px 4px 18px;
+  max-width: 70%;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.answer-bubble {
+  align-self: flex-start;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  border-radius: 4px 18px 18px 18px;
+  max-width: 80%;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.source-chip {
+  display: inline-block;
+  margin-top: 8px;
+  margin-right: 6px;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  background: rgba(124,106,247,0.1);
+  border: 1px solid rgba(124,106,247,0.3);
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.doc-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-delete {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.doc-delete:hover { color: var(--danger); }
+
+.empty-state {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 12px;
+  font-style: italic;
+}
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1>AI Knowledge Base</h1>
+  </header>
+
+  <!-- Main layout -->
+  <div class="layout">
+
+    <!-- Sidebar: upload + doc list -->
+    <aside>
+      <div class="upload-section">
+        <p>Upload Document</p>
+        <input type="file" id="file-input" accept=".txt,.md" />
+      </div>
+      <div class="doc-list" id="doc-list"></div>
+    </aside>
+
+    <!-- Chat area -->
+    <main>
+      <div class="chat-feed" id="chat-feed"></div>
+      <div class="input-area">
+        <textarea id="question-input" placeholder="Ask something..."></textarea>
+        <button id="ask-btn">Ask</button>
+      </div>
+    </main>
+
+  </div>
+<script>
+    async function loadDocs() {
+  const res = await fetch('/api/documents');
+  const docs = await res.json();
+
+  const list = document.getElementById('doc-list');
+
+  if (docs.length === 0) {
+    list.innerHTML = '<p class="empty-state">No documents yet!</p>';
+    return;
+  }
+
+  list.innerHTML = docs.map(d => `
+    <div class="doc-item">
+      <span>${d.name}</span>
+      <button class="doc-delete" onclick="deleteDoc('${d.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+// Run on page load
+loadDocs();
+
+document.getElementById('file-input').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/api/documents', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    alert(`✅ ${data.document.name} uploaded!`);
+    loadDocs(); // refresh the list
+  } else {
+    alert(`❌ ${data.error}`);
+  }
+
+  this.value = ''; // reset input
+});
+
+async function deleteDoc(id) {
+  if (!confirm('Delete this document?')) return;
+  await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+  loadDocs();
+}
+
+document.getElementById('ask-btn').addEventListener('click', ask);
+
+// Also allow Enter key to submit (Shift+Enter for new line)
+document.getElementById('question-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    ask();
+  }
+});
+
+async function ask() {
+  const input = document.getElementById('question-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  const feed = document.getElementById('chat-feed');
+
+  // Step 1 — show question bubble
+  const questionBubble = document.createElement('div');
+  questionBubble.className = 'question-bubble';
+  questionBubble.textContent = question;
+  feed.appendChild(questionBubble);
+
+  // Step 2 — show thinking indicator
+  const thinking = document.createElement('div');
+  thinking.className = 'answer-bubble';
+  thinking.textContent = '⏳ Thinking...';
+  feed.appendChild(thinking);
+
+  // Clear input + disable button
+  input.value = '';
+  document.getElementById('ask-btn').disabled = true;
+  feed.scrollTop = feed.scrollHeight;
+
+  // Step 3 — call the API
+  const res = await fetch('/api/ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question })
+  });
+
+  const data = await res.json();
+
+  // Step 4 — replace thinking with answer
+  const sourceTags = data.sources && data.sources.length
+    ? data.sources.map(s => `<span class="source-chip">📄 ${s}</span>`).join('')
+    : '';
+
+  thinking.innerHTML = `${data.answer}${sourceTags}`;
+
+  // Step 5 — re-enable button + scroll down
+  document.getElementById('ask-btn').disabled = false;
+  feed.scrollTop = feed.scrollHeight;
+}
+</script>
+
+</body>
+</html>
