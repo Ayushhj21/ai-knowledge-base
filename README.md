@@ -146,8 +146,3 @@ http://localhost:3000
 - [ ] User authentication with JWT
 - [ ] Multi-user support with separate knowledge bases
 
----
-
-## 📄 License
-
-MIT
